@@ -5,10 +5,14 @@
 
 int g_shutdown = 0;
 uint64_t stone = 0;
+uint64_t last = 0;
 
 static void alarm_handler(int signum)
 {
-	printf("%lu\n", stone);
+	printf("%lu", stone);
+	if(last > 0) { printf(" (%lu)", stone-last); }
+	printf("\n");
+	last = stone;
 	fflush(stdout);
 	(void) alarm(1);
 }
