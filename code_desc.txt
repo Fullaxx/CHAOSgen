@@ -48,3 +48,4 @@ If the pouch is full then new_data_available will get incremented
 
 Once new_data_available is greater than zero, any one of the collect_chaos() threads
 will get_chaos() and then transmute() that chaos into random numbers.
+pot1.c and pot2.c will "stir the pot" before returning random numbers
