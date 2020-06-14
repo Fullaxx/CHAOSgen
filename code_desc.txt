@@ -1,0 +1,50 @@
+So we start by launching 2 threads from whatever main file (i.e. main.c, dh.c, keygen.c)
+int start_your_engines(void) is that kickoff and should be the first thing to get called,
+start_your_engines() is located in pouch.c and will kick off time_thread() and int_thread().
+
+static void* int_thread(void *p) is a thread that spins the "rolling stone"
+This is nothing more than an incrementing long integer.
+you can use ./incr_int.dbg to see how fast this int rolls
+I get roughly 600000000 increments per second on an idle thread.
+This is useful b/c every time we grab the value of stone, it has already changed
+and it doesn't matter what it is or what it was.
+The only thing that matter is that it cannot be recovered unless you are inside the CPU
+
+static void* time_thread(void *p) is a thread that will constantly grab the value from the hardware clock
+This thread will use clock_gettime to grab to fill struct timespec ts with the seconds value and more importantly the nanoseconds value.
+The nanoseconds values is important b/c it is always different.
+
+These 2 threads will continuously run doing the work described.
+We will use the combination of the rolling stone and clock to fill the "chaos pouch".
+#ifdef LARGEPOUCH
+unsigned int pouch[65536]: is an array of 65536 unsigned ints
+#else
+unsigned int pouch[256]: is an array of 256 unsigned ints
+#endif
+
+After every clock_gettime() we will siphon() off data to put into the pouch.
+Based on the value in stone at the time, we will grab either:
+
+12 bits of stone and 20 bits of clock
+	stone_lo = stone & 0x00000FFF;
+	nsec_lo = ts.tv_nsec & 0x000FFFFF;
+	pval = (stone_lo << (5*4)) | (nsec_lo);
+
+16 bits of stone and 16 bits of clock
+	stone_lo = stone & 0xFFFF;
+	nsec_lo = ts.tv_nsec & 0xFFFF;
+	pval = (stone_lo << (4*4)) | (nsec_lo);
+
+20 bits of stone and 12 bits of clock.
+	stone_lo = stone & 0x000FFFFF;
+	nsec_lo = ts.tv_nsec & 0x00000FFF;
+	pval = (stone_lo << (3*4)) | (nsec_lo);
+
+This 32 bit value will be inserted into pouch via:
+	pouch[pc++] = pval;
+
+If the pouch is full then new_data_available will get incremented
+	new_data_available++;
+
+Once new_data_available is greater than zero, any one of the collect_chaos() threads
+will get_chaos() and then transmute() that chaos into random numbers.
