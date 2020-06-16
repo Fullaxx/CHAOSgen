@@ -11,7 +11,7 @@ and it doesn't matter what it is or what it was.
 The only thing that matter is that it cannot be recovered unless you are inside the CPU
 
 static void* time_thread(void *p) is a thread that will constantly grab the value from the hardware clock
-This thread will use clock_gettime to grab to fill struct timespec ts with the seconds value and more importantly the nanoseconds value.
+and fill struct timespec ts with the seconds value and the nanoseconds value.
 The nanoseconds values is important b/c it is always different.
 
 These 2 threads will continuously run doing the work described.
@@ -46,6 +46,16 @@ This 32 bit value will be inserted into pouch via:
 If the pouch is full then new_data_available will get incremented
 	new_data_available++;
 
+By default 1 collect_chaos will run to get and transmute the chaos.
+More can be added with -n <num>
 Once new_data_available is greater than zero, any one of the collect_chaos() threads
 will get_chaos() and then transmute() that chaos into random numbers.
 pot1.c and pot2.c will "stir the pot" before returning random numbers
+get_chaos() will set new_data_available = 0; at the end of it's function call.
+Any other thread will have to wait for siphon to update pouch and set new_data_available++; before a pouch is returned
+
+get_chaos() will return the pouch of data in it's current state.
+That same pouch cannot be returned to another thread until new values has been added to it.
+The chaos pouch will be sent to pot1 or pot 2 for transmutation.
+Transmutaion consists of 5 hashing algorithms and a scramble of the output.
+This scrambled output will be sent back in the form of random numbers.
