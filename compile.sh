@@ -45,4 +45,12 @@ gcc ${DBGCFLAGS} -DSTATISTICS -DLARGEPOUCH \
 dh.c pouch.c pot?.c getopts.c my_gcry_help.c \
 -lpthread `libgcrypt-config --cflags --libs` -o stats_lp.dbg
 
+gcc ${OPTCFLAGS} \
+keygen.c pouch.c pot?.c getopts.c my_gcry_help.c \
+-lpthread `libgcrypt-config --cflags --libs` -o keygen.exe
+
+gcc ${DBGCFLAGS} \
+keygen.c pouch.c pot?.c getopts.c my_gcry_help.c \
+-lpthread `libgcrypt-config --cflags --libs` -o keygen.dbg
+
 strip *.exe
