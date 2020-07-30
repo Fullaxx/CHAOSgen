@@ -13,7 +13,7 @@ uint64_t g_clock_gettime_called = 0;
 extern int g_shutdown;
 
 uint64_t stone = 0;
-struct timespec ts;
+struct timespec ts = { 0, 0 };
 int siphon_locked = 1;
 
 PCT pc = 0;
@@ -62,11 +62,35 @@ static void siphon(void)
 	}
 }
 
+/*
+CLOCK_MONOTONIC
+  A  nonsettable  system-wide clock that represents monotonic time since--as described by POSIX--"some un-
+  specified point in the past".  On Linux, that point corresponds to the number of seconds that the system
+  has been running since it was booted.
+
+  The CLOCK_MONOTONIC clock is not affected by discontinuous jumps in the system time (e.g., if the system
+  administrator manually changes the clock), but is affected by the incremental adjustments  performed  by
+  adjtime(3)  and  NTP.  This clock does not count time that the system is suspended.  All CLOCK_MONOTONIC
+  variants guarantee that the time returned by consecutive calls will not  go  backwards,  but  successive
+  calls may--depending on the architecture--return identical (not-increased) time values.
+
+CLOCK_MONOTONIC_RAW (since Linux 2.6.28; Linux-specific)
+  Similar to CLOCK_MONOTONIC, but provides access to a raw hardware-based time that is not  subject
+  to  NTP  adjustments or the incremental adjustments performed by adjtime(3).  This clock does not
+  count time that the system is suspended.
+*/
 static void* time_thread(void *p)
 {
+	struct timespec lts = { 0, 0 };
+
 	while(!g_shutdown) {
-		clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-		siphon(); // Continuously update the pouch
+		clock_gettime(CLOCK_MONOTONIC_RAW, &lts);
+		if(lts.tv_nsec != ts.tv_nsec) {
+			// Make sure we got a new value
+			ts.tv_sec  = lts.tv_sec;
+			ts.tv_nsec = lts.tv_nsec;
+			siphon(); // Continuously update the pouch
+		}
 
 #ifdef STATISTICS
 		g_clock_gettime_called++;
