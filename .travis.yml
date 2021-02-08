@@ -1,0 +1,17 @@
+dist: focal
+sudo: false
+language: c
+#env:
+#  matrix:
+#    - VALGRIND=On SANITIZERS=Off
+#    - VALGRIND=Off SANITIZERS=Off
+#    - VALGRIND=Off SANITIZERS=On
+compiler:
+  - gcc
+addons:
+  apt:
+    packages:
+      - libgcrypt20-dev
+      - dieharder
+script:
+  - ./compile.sh
