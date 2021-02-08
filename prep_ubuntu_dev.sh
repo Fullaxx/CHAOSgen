@@ -6,4 +6,4 @@ set -e
 
 apt-get update
 apt-get upgrade
-apt-get install build-essential libgcrypt11-dev dieharder
+apt-get install build-essential libgcrypt20-dev dieharder
