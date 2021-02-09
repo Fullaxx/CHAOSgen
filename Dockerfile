@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Install build tools and compile CHAOSgen
 FROM ubuntu:focal AS build
-ADD . /code
+ADD src /code
 RUN apt-get update && \
 	apt-get install -y build-essential libgcrypt20-dev && \
 	cd /code && ./compile.sh
