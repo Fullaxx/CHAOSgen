@@ -64,7 +64,7 @@ static void siphon(void)
 
 /*
 CLOCK_MONOTONIC
-  A  nonsettable  system-wide clock that represents monotonic time since--as described by POSIX--"some un-
+  A  nonsettable system-wide clock that represents monotonic time since--as described by POSIX--"some un-
   specified point in the past".  On Linux, that point corresponds to the number of seconds that the system
   has been running since it was booted.
 
@@ -122,16 +122,13 @@ int start_your_engines(void)
 {
 	pthread_t thr_id;
 
-	if( pthread_create(&thr_id, NULL, &int_thread, NULL) ) goto bail;
-	if( pthread_detach(thr_id) ) goto bail;
+	if( pthread_create(&thr_id, NULL, &int_thread, NULL) ) { return -1; }
+	if( pthread_detach(thr_id) ) { return -1; }
 
-	if( pthread_create(&thr_id, NULL, &time_thread, NULL) ) goto bail;
-	if( pthread_detach(thr_id) ) goto bail;
+	if( pthread_create(&thr_id, NULL, &time_thread, NULL) ) { return -1; }
+	if( pthread_detach(thr_id) ) { return -1; }
 
 	return 0;
-
-bail:
-	return -1;
 }
 
 // ABOVE IS SELF-CONTAINED MULTITHREAD CODE

@@ -10,7 +10,6 @@
 #include "getopts.h"
 
 void parse_args(int argc, char **argv);
-int start_your_engines(void);
 char* transmute_1(uint8_t *buf);
 char* transmute_2(uint8_t *buf);
 
@@ -57,8 +56,8 @@ static void write_binary_entropy(char *numbers)
 	// Only 1 thread in here at a time
 	pthread_mutex_lock(&fwlock);
 
-	if(g_shutdown) return;
-	if(g_filesize <= 0) return;
+	if(g_shutdown) { return; }
+	if(g_filesize <= 0) { return; }
 
 	token = strtok_r(numbers, "\n", &saveptr);
 	while(token) {
@@ -71,7 +70,7 @@ static void write_binary_entropy(char *numbers)
 			fwrite(&rval, g_filesize, 1, f);
 			g_filesize = 0;
 		}
-		
+
 		if(g_filesize <= 0) { g_shutdown = 1; break; }
 		token = strtok_r(NULL, "\n", &saveptr);
 	}
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
 
 	// Let the thread(s) catch and die
 	usleep(10000);
-	if(g_filename) free(g_filename);
+	if(g_filename) { free(g_filename); }
 	fclose(f);
 	return 0;
 }

@@ -22,6 +22,7 @@ typedef uint32_t PBT;
 // the amount of bytes returned in each get_chaos call
 #define CHAOSSIZE (PSIZE*sizeof(PBT))
 
+int start_your_engines(void);
 int get_chaos(uint8_t *buf);
 
 #endif

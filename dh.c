@@ -10,7 +10,6 @@
 #include "getopts.h"
 
 void parse_args(int argc, char **argv);
-int start_your_engines(void);
 char* transmute_1(uint8_t *buf);
 char* transmute_2(uint8_t *buf);
 
