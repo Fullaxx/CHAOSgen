@@ -24,7 +24,12 @@ RUN apt-get update && \
 	rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
 # ------------------------------------------------------------------------------
-# Install CHAOSgen binaries to /root
+# Update .bashrc
+RUN echo >>/root/.bashrc && \
+	echo "cd /root/chaos" >>/root/.bashrc
+
+# ------------------------------------------------------------------------------
+# Install CHAOSgen binaries to /root/chaos/
 COPY --from=build /code/*.exe /code/test*.sh /root/chaos/
 
 # ------------------------------------------------------------------------------
