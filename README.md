@@ -15,7 +15,7 @@ docker build -t="fullaxx/chaosgen" github.com/Fullaxx/chaosgen
 ## Testing randomness with dieharder
 ```
 $ ./dh.exe -t 20000000 >dh.1.in
-$ dieharder -f dh.1.in -g 202 -a >dh.1.out
+$ dieharder -f dh.1.in -g 202 -a
 #=============================================================================#
 #            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
 #=============================================================================#
