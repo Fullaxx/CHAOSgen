@@ -18,19 +18,39 @@ int g_chaos_threads = 1;
 long g_chaos_count = 1;
 
 #ifdef STATISTICS
+#include "pot.h"
 uint64_t g_chaos_collected = 0;
 extern uint64_t g_clock_gettime_called;
 
 static void alarm_handler(int signum)
 {
+	char *units;
+	double amt;
+	uint64_t l_uintspersec, l_bytespersec, l_bytesperhr;
 	uint64_t l_clock = g_clock_gettime_called;
 	uint64_t l_chaos = g_chaos_collected;
 
 	g_clock_gettime_called = 0;
 	g_chaos_collected = 0;
 
+	units = NULL;
 	printf("clock_gettime called: %lu\n", l_clock);
-	printf("chaos: %lu (%lu n/s) [%lu B/hr]\n", l_chaos, l_chaos*5*16, (l_chaos*5*16)*11*3600);
+	l_uintspersec = l_chaos*HASHCOUNT*INTSPERHASH;
+	l_bytespersec = l_uintspersec*BYTESPERINT;
+	l_bytesperhr = l_bytespersec*3600;
+	if(l_bytesperhr > 1000000000) {
+		units = "GB";
+		amt = l_bytesperhr/1000000000.0;
+	} else if(l_bytesperhr > 1000000) {
+		units = "MB";
+		amt = l_bytesperhr/1000000.0;
+	} else if(l_bytesperhr > 1000) {
+		units = "KB";
+		amt = l_bytesperhr/1000.0;
+	} else {
+		printf("chaos: %lu (%lu n/s) [%lu B/hr]\n", l_chaos, l_uintspersec, l_bytesperhr);
+	}
+	if(units) { printf("chaos: %lu (%lu n/s) [%3.3f %s/hr]\n", l_chaos, l_uintspersec, amt, units); }
 	printf("\n");
 	fflush(stdout);
 	(void) alarm(1);

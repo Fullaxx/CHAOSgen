@@ -56,8 +56,11 @@ static void write_binary_entropy(char *numbers)
 	// Only 1 thread in here at a time
 	pthread_mutex_lock(&fwlock);
 
-	if(g_shutdown) { return; }
-	if(g_filesize <= 0) { return; }
+	if((g_shutdown) || (g_filesize <= 0)) {
+		// If we are done, bail out
+		pthread_mutex_unlock(&fwlock);
+		return;
+	}
 
 	token = strtok_r(numbers, "\n", &saveptr);
 	while(token) {
