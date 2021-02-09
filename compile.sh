@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 GCCFLAGS=`libgcrypt-config --cflags`
 GCLIBS=`libgcrypt-config --libs`
 
