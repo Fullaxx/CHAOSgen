@@ -19,7 +19,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # Install dieharder,libgcrypt20 and clean up
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	  dieharder nano libgcrypt20 && \
+	  dieharder less libgcrypt20 nano && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
