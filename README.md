@@ -12,10 +12,75 @@ docker pull fullaxx/chaosgen
 docker build -t="fullaxx/chaosgen" github.com/Fullaxx/chaosgen
 ```
 
-## Testing randomness with dieharder
+## Requirements for building
+First we need to make sure we have all the appropriate libraries. \
+Please consult this chart for help with installing the required packages. \
+If your OS is not listed, please help us fill out the table, or submit a request via github.
+
+| OS     | Commands (as root)                                         |
+| ------ | ---------------------------------------------------------- |
+| CentOS | `yum install -y gcc libgcrypt-devel`                       |
+| Debian | `apt update; apt install -y build-essential libgcrypt-dev` |
+| Fedora | `yum install -y gcc libgcrypt-devel`                       |
+| Ubuntu | `apt update; apt install -y build-essential libgcrypt-dev` |
+
+## Compile the Code
+Install the libgcrypt development package and the compile the code
 ```
-$ ./dh.exe -t 20000000 >dh.1.in
-$ dieharder -f dh.1.in -g 202 -a
+cd src
+./compile.sh
+```
+
+## Code Flow
+<code>start_your_engines()</code> kicks off 2 threads:
+* <code>int_thread()</code> will increment a uint64_t variable.
+* <code>time_thread()</code> will continuously pull the time from the hardware clock.
+
+The entropy pouch is updated using <code>siphon()</code> after every <code>clock_gettime()</code> call in <code>time_thread()</code>. \
+Chaos is gathered from the entropy pouch using <code>collect_chaos()</code> upon pouch update. \
+<code>get_chaos()</code> should never hand out the same data twice. \
+Chaos (collected entropy) is fed through libgcrypt hashing functions using <code>transmute_2()</code>. \
+See [code_walkthrough.txt](https://github.com/Fullaxx/CHAOSgen/blob/master/code_walkthrough.txt) for more detailed information.
+
+## Running the Binaries
+There are 3 distinct binaries:
+* keygen - used to create key files for symmetric encryption
+* dh - used to generate random numbers that dieharder can ingest
+* stats - used to determine how quickly entropy can be generated and show how fast random numbers can be produced
+
+## Using keygen
+Use 2 hashing cores to generate a 1KB random file named 1KB.bin:
+```
+./keygen.exe -n 2 -f 1KB.bin -b 1000
+```
+Use 6 hashing cores to generate a 1MB random file named 1MB.bin:
+```
+./keygen.exe -n 6 -f 1MB.bin -b 1000000
+```
+
+## Using stats
+stats.exe will show you event counts every second.
+These values directly translate to how quickly you can generate entropy.
+The first line will tell you how many times <code>clock_gettime()</code> got called.
+Entropy is updated via <code>siphon()</code> after every <code>clock_gettime()</code>.
+The second line is the amount of chaos you are collecting per second via <code>collect_chaos()</code>.
+This value will tell you how quickly entropy is being generated.
+The rate of chaos production and the number of hashing cores will determine how fast random numbers are being produced via <code>transmute_2()</code>.
+```
+./stats.exe
+clock_gettime called: 3021312
+chaos: 33295 (2663600 n/s) [105.479 GB/hr]
+```
+You can adjust the number of hashing cores with -n to maximize random number output:
+```
+./stats.exe -n 6
+clock_gettime called: 2555011
+chaos: 111480 (8918400 n/s) [353.169 GB/hr]
+```
+
+## Testing randomness of dh.exe with dieharder
+```
+$ ./test_sp.sh
 #=============================================================================#
 #            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
 #=============================================================================#
