@@ -9,5 +9,5 @@ if [ ${HWCORES} -gt 3 ]; then
 fi
 
 FILE="dh.lp.1.in"
-time ./dh_lp.exe -n ${CPUS} -t 20000000 > ${FILE}
-dieharder -f ${FILE} -g 202 -a > dh.lp.1.out
+time ./dh_lp.exe -n ${CPUS} -t 20000000 >${FILE}
+dieharder -f ${FILE} -g 202 -a >dh.lp.1.out

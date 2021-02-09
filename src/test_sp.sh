@@ -8,6 +8,6 @@ if [ ${HWCORES} -gt 3 ]; then
   CPUS=$(( ${HWCORES}-3 ))
 fi
 
-FILE="dh.1.in"
-time ./dh.exe -n ${CPUS} -t 20000000 > ${FILE}
-dieharder -f ${FILE} -g 202 -a > dh.1.out
+FILE="dh.sp.1.in"
+time ./dh.exe -n ${CPUS} -t 20000000 >${FILE}
+dieharder -f ${FILE} -g 202 -a >dh.sp.1.out
