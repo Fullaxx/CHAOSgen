@@ -6,12 +6,12 @@ static void* int_thread(void *p) is a thread that spins the "rolling stone"
 This is nothing more than an incrementing long integer.
 you can use ./incr_int.dbg to see how fast this int rolls
 I get roughly 600000000 increments per second on an idle thread.
-This is useful b/c every time we grab the value of stone, it has already changed
-and it doesn't matter what it is or what it was.
-The only thing that matter is that it cannot be recovered unless you are inside the CPU
+This is useful b/c every time we grab the value of stone,
+it has already changed and it doesn't matter what it is or what it was.
+The only thing that matters is that it cannot be recovered unless you are inside the CPU.
 
 static void* time_thread(void *p) is a thread that will constantly grab the value from the hardware clock
-and fill struct timespec ts with the seconds value and the nanoseconds value.
+and fill struct timespec lts with the seconds value and the nanoseconds value.
 The nanoseconds values is important b/c it is always different.
 
 These 2 threads will continuously run doing the work described.
@@ -46,15 +46,15 @@ This 32 bit value will be inserted into pouch via:
 If the pouch is full then new_data_available will get incremented
 	new_data_available++;
 
-By default 1 collect_chaos will run to get and transmute the chaos.
+By default 1 collect_chaos() thread will run to get and transmute the chaos.
 More can be added with -n <num>
 Once new_data_available is greater than zero, any one of the collect_chaos() threads
 will get_chaos() and then transmute() that chaos into random numbers.
-pot1.c and pot2.c will "stir the pot" before returning random numbers
-get_chaos() will set new_data_available = 0; at the end of it's function call.
-Any other thread will have to wait for siphon to update pouch and set new_data_available++; before a pouch is returned
+pot1.c and pot2.c will "stir the pot" using transmute_X()before returning random numbers
+get_chaos() will set new_data_available = 0; at the end of its function call.
+Any other thread will have to wait for siphon to update pouch and set new_data_available++ before a pouch is returned
 
-get_chaos() will return the pouch of data in it's current state.
+get_chaos() will return the pouch of data in its current state.
 That same pouch cannot be returned to another thread until new values has been added to it.
 The chaos pouch will be sent to pot1 or pot 2 for transmutation.
 Transmutaion consists of 5 hashing algorithms and a scramble of the output.

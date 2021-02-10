@@ -33,13 +33,14 @@ cd src
 
 ## Code Flow
 <code>start_your_engines()</code> kicks off 2 threads:
-* <code>int_thread()</code> will increment a uint64_t variable.
+* <code>int_thread()</code> will continuously increment a uint64_t variable (i.e. the rolling stone).
 * <code>time_thread()</code> will continuously pull the time from the hardware clock.
 
+Entropy will be pulled from the least significant bits of the rolling stone and the hardware clock.
 The entropy pouch is updated using <code>siphon()</code> after every <code>clock_gettime()</code> call in <code>time_thread()</code>. \
 Chaos is gathered from the entropy pouch using <code>collect_chaos()</code> upon pouch update. \
 <code>get_chaos()</code> should never hand out the same data twice. \
-Chaos (collected entropy) is fed through libgcrypt hashing functions using <code>transmute_2()</code>. \
+Once collected, chaos is fed through libgcrypt hashing functions using <code>transmute_2()</code>. \
 See [code_walkthrough.txt](https://github.com/Fullaxx/CHAOSgen/blob/master/code_walkthrough.txt) for more detailed information.
 
 ## Running the Binaries
@@ -78,7 +79,7 @@ clock_gettime called: 2555011
 chaos: 111480 (8918400 n/s) [353.169 GB/hr]
 ```
 
-## Testing randomness of dh.exe with dieharder
+## Testing randomness with dieharder
 ```
 $ ./test_sp.sh
 #=============================================================================#
