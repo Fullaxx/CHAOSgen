@@ -16,6 +16,7 @@ uint64_t stone = 0;
 struct timespec ts = { 0, 0 };
 int siphon_locked = 1;
 
+// Pouch Counter
 PCT pc = 0;
 PBT pouch[PSIZE];
 uint64_t pouch_roll = 0;
@@ -27,7 +28,7 @@ static void siphon(void)
 	uint32_t path, stone_lo, nsec_lo;
 	PBT pval;
 
-	if(siphon_locked) return;
+	if(siphon_locked) { return; }
 
 	path = (stone + ts.tv_nsec) % 3;
 	if(path == 0) {
@@ -64,7 +65,7 @@ static void siphon(void)
 
 /*
 CLOCK_MONOTONIC
-  A  nonsettable system-wide clock that represents monotonic time since--as described by POSIX--"some un-
+  A  nonsettable  system-wide clock that represents monotonic time since--as described by POSIX--"some un-
   specified point in the past".  On Linux, that point corresponds to the number of seconds that the system
   has been running since it was booted.
 
@@ -79,7 +80,7 @@ CLOCK_MONOTONIC_RAW (since Linux 2.6.28; Linux-specific)
   to  NTP  adjustments or the incremental adjustments performed by adjtime(3).  This clock does not
   count time that the system is suspended.
 */
-static void* time_thread(void *p)
+static void* time_spin(void *p)
 {
 	struct timespec lts = { 0, 0 };
 
@@ -100,18 +101,14 @@ static void* time_thread(void *p)
 	return (NULL);
 }
 
-static void* int_thread(void *p)
+static void* long_spin(void *p)
 {
+	// Let the stone spin a bit before we unlock
 	while(stone < 1e9) { stone++; }
 	siphon_locked = 0;
 
-/*
-#ifdef STATISTICS
-	printf("siphon_unlocked\n");
-#endif
-*/
-
 	while(!g_shutdown) {
+		// This stone will roll forever
 		stone++;
 	}
 	return (NULL);
@@ -122,10 +119,10 @@ int start_your_engines(void)
 {
 	pthread_t thr_id;
 
-	if( pthread_create(&thr_id, NULL, &int_thread, NULL) ) { return -1; }
+	if( pthread_create(&thr_id, NULL, &long_spin, NULL) ) { return -1; }
 	if( pthread_detach(thr_id) ) { return -1; }
 
-	if( pthread_create(&thr_id, NULL, &time_thread, NULL) ) { return -1; }
+	if( pthread_create(&thr_id, NULL, &time_spin, NULL) ) { return -1; }
 	if( pthread_detach(thr_id) ) { return -1; }
 
 	return 0;

@@ -1,16 +1,16 @@
 So we start by launching 2 threads from whatever main file (i.e. main.c, dh.c, keygen.c)
 int start_your_engines(void) is that kickoff and should be the first thing to get called,
-start_your_engines() is located in pouch.c and will kick off time_thread() and int_thread().
+start_your_engines() is located in pouch.c and will kick off time_spin() and long_spin().
 
-static void* int_thread(void *p) is a thread that spins the "rolling stone"
-This is nothing more than an incrementing long integer.
+static void* long_spin(void *p) is a thread that spins the "rolling stone"
+This is nothing more than an incrementing uint64_t.
 you can use ./incr_int.dbg to see how fast this int rolls
 I get roughly 600000000 increments per second on an idle thread.
 This is useful b/c every time we grab the value of stone,
 it has already changed and it doesn't matter what it is or what it was.
 The only thing that matters is that it cannot be recovered unless you are inside the CPU.
 
-static void* time_thread(void *p) is a thread that will constantly grab the value from the hardware clock
+static void* time_spin(void *p) is a thread that will constantly grab the value from the hardware clock
 and fill struct timespec lts with the seconds value and the nanoseconds value.
 The nanoseconds values is important b/c it is always different.
 
