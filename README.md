@@ -36,7 +36,7 @@ cd src
 * <code>int_thread()</code> will continuously increment a uint64_t variable (i.e. the rolling stone).
 * <code>time_thread()</code> will continuously pull the time from the hardware clock.
 
-Entropy will be pulled from the least significant bits of the rolling stone and the hardware clock.
+Entropy will be pulled from the least significant bits of the rolling stone and the hardware clock. \
 The entropy pouch is updated using <code>siphon()</code> after every <code>clock_gettime()</code> call in <code>time_thread()</code>. \
 Chaos is gathered from the entropy pouch using <code>collect_chaos()</code> upon pouch update. \
 <code>get_chaos()</code> should never hand out the same data twice. \
