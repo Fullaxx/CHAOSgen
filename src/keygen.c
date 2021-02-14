@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 
 	// Wait for the sweet release of death
 	while(!g_shutdown) {
-		usleep(25);
+		usleep(100);
 	}
 
 	// Let the thread(s) catch and die
