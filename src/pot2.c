@@ -9,6 +9,7 @@
 
 extern uint64_t stone;
 
+// This must be free()'d
 static char* collect_uints(digests_t *out)
 {
 	char *buf;
