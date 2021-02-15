@@ -9,5 +9,11 @@ if [ ${HWCORES} -gt 3 ]; then
 fi
 
 FILE="dh.sp.1.in"
-time ./dh.exe -n ${CPUS} -t 20000000 >${FILE}
-dieharder -f ${FILE} -g 202 -a >dh.sp.1.out
+START=`awk -F. '{print $1}' /proc/uptime`
+dh.exe -n ${CPUS} -t 20000000 >${FILE}
+STOP=`awk -F. '{print $1}' /proc/uptime`
+COUNT=`cat ${FILE} | wc -l`
+DIFF=$(( STOP - START ))
+RNUMPRESEC=`calc "${COUNT}/${DIFF}" | cut -d. -f1 | tr '~' ' ' | awk '{print $1}'`
+echo "${COUNT} random numbers generated in ${DIFF}s (approx ${RNUMPRESEC} per sec)"
+dieharder -f ${FILE} -g 202 -a | tee dh.sp.1.out
