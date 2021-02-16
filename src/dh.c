@@ -79,31 +79,30 @@ static void sig_handler(int signum)
 
 static void* collect_chaos(void *p)
 {
-	int bytes;
-	uint8_t chaos[CHAOSSIZE];
-	char *entropy;
+	chaos_t s;
 
 	while(!g_shutdown) {
-		memset(&chaos[0], 0, sizeof(chaos));
-		bytes = get_chaos(&chaos[0]);
-		if(bytes > 0) {
-			//entropy = transmute_1(&chaos[0]);
-			entropy = transmute_2(&chaos[0]);
+		memset(&s, 0, sizeof(s));
+		get_chaos(&s);
+		if(s.entropy) {
+			//s.numbers = transmute_1(s.entropy);
+			s.numbers = transmute_2(s.entropy);
 
 #ifdef STATISTICS
 			g_chaos_collected++;
 #else
 			if(g_chaos_count-- > 0) {
-				printf("%s", entropy);
+				printf("%s", s.numbers);
 			} else { g_shutdown = 1; }
 #endif
 
-			free(entropy);
+			free(s.entropy);
+			free(s.numbers);
 		}
 
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 #ifndef STATISTICS

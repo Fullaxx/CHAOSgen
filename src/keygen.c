@@ -83,22 +83,21 @@ static void write_binary_entropy(char *numbers)
 
 static void* collect_chaos(void *p)
 {
-	int bytes;
-	uint8_t chaos[CHAOSSIZE];
-	char *entropy;
+	chaos_t s;
 
 	while(g_shutdown == 0) {
-		memset(&chaos[0], 0, sizeof(chaos));
-		bytes = get_chaos(&chaos[0]);
-		if(bytes > 0) {
-			//entropy = transmute_1(&chaos[0]);
-			entropy = transmute_2(&chaos[0]);
-			write_binary_entropy(entropy);
-			free(entropy);
+		memset(&s, 0, sizeof(s));
+		get_chaos(&s);
+		if(s.entropy) {
+			//s.numbers = transmute_1(s.entropy);
+			s.numbers = transmute_2(s.entropy);
+			write_binary_entropy(s.numbers);
+			free(s.entropy);
+			free(s.numbers);
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 int main(int argc, char *argv[])

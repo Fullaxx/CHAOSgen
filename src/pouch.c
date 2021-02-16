@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
@@ -132,8 +133,7 @@ int start_your_engines(void)
 ////////////////////////////////////////
 // BELOW IS CALLED FROM ORIGINAL THREAD
 
-// buf must be of size CHAOSSIZE
-int get_chaos(uint8_t *buf)
+void get_chaos(chaos_t *s)
 {
 #ifndef NO_POUCH_RAND_START
 	int n;
@@ -146,22 +146,24 @@ int get_chaos(uint8_t *buf)
 
 	while(new_data_available == 0) {
 		// check for shutdown flag while we wait for data to become available
-		if(g_shutdown) { pthread_mutex_unlock(&plock); return 0; }
+		if(g_shutdown) { pthread_mutex_unlock(&plock); return; }
 		sched_yield();	// Evidently this is more necessary that originally thought ...
 	}
 
+	s->entropy = malloc(CHAOSSIZE);
 #ifdef NO_POUCH_RAND_START
-	memcpy(buf, &pouch[0], CHAOSSIZE);
+	memcpy(s->entropy, &pouch[0], CHAOSSIZE);
+	//s->bytes = CHAOSSIZE;
 #else
 	n = 0;
 	i = start = (stone % PSIZE);
 	do {
-		memcpy(buf+n, &pouch[i++], sizeof(PBT));
+		memcpy(&s->entropy[n], &pouch[i++], sizeof(PBT));
 		n += sizeof(PBT);
 	} while(i != start);
+	//s->bytes = n;	// n SHOULD ALWAYS BE CHAOSSIZE
 #endif
 
 	new_data_available = 0;
 	pthread_mutex_unlock(&plock);
-	return CHAOSSIZE;
 }

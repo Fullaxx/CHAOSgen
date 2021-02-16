@@ -19,10 +19,15 @@ typedef uint8_t PCT;
 // Pouch holds PSIZE amount of PBTs
 typedef uint32_t PBT;
 
-// the amount of bytes returned in each get_chaos call
+// the amount of bytes given up in each call to get_chaos()
 #define CHAOSSIZE (PSIZE*sizeof(PBT))
 
+typedef struct {
+	uint8_t *entropy;
+	char *numbers;
+} chaos_t;
+
 int start_your_engines(void);
-int get_chaos(uint8_t *buf);
+void get_chaos(chaos_t *s);
 
 #endif

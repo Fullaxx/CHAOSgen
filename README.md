@@ -81,7 +81,7 @@ chaos: 111480 (8918400 n/s) [353.169 GB/hr]
 
 ## Testing randomness with dieharder
 ```
-$ ./test_sp.sh
+$ docker run -it --rm fullaxx/chaosgen /root/chaos/test_sp.sh
 #=============================================================================#
 #            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
 #=============================================================================#

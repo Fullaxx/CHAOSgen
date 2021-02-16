@@ -11,8 +11,10 @@ compiler:
 addons:
   apt:
     packages:
+      - libhiredis-dev
       - libgcrypt20-dev
       - dieharder
 script:
   - cd src
   - ./compile.sh
+  - ./compile_chaosstorage.sh
