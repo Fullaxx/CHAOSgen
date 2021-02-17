@@ -20,14 +20,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>		//gettid()
 #include <time.h>
 #include <pthread.h>
-#include <errno.h>
-#include <sched.h>
-//#include <sys/types.h>
 
 #include "pouch.h"
+#include "pin.h"
 
 #ifdef STATISTICS
 uint64_t g_clock_gettime_called = 0;
@@ -86,18 +83,6 @@ static void siphon(void)
 	}
 }
 
-static int pin_thread(int cpuid)
-{
-	int err;
-	cpu_set_t mask;
-	CPU_ZERO(&mask);
-	CPU_SET(cpuid, &mask);
-
-	err = sched_setaffinity(gettid(), sizeof(mask), &mask);
-	if(err) { fprintf(stderr, "sched_setaffinity(%d) error: %s\n", gettid(), strerror(errno)); }
-	return err;
-}
-
 /*
 CLOCK_MONOTONIC
   A  nonsettable  system-wide clock that represents monotonic time since--as described by POSIX--"some un-
@@ -119,7 +104,8 @@ static void* time_spin(void *p)
 {
 	struct timespec lts = { 0, 0 };
 
-	if((uint64_t)p > 0) { (void)pin_thread(0); }
+	// If saveacore was requested, PIN to CPU 0
+	if((uint64_t)p > 0) { (void)pinme(0); }
 
 	while(!g_shutdown) {
 		clock_gettime(CLOCK_MONOTONIC_RAW, &lts);
@@ -140,7 +126,8 @@ static void* time_spin(void *p)
 
 static void* long_spin(void *p)
 {
-	if((uint64_t)p > 0) { (void)pin_thread(0); }
+	// If saveacore was requested, PIN to CPU 0
+	if((uint64_t)p > 0) { (void)pinme(0); }
 
 	// Let the stone spin a bit before we unlock
 	while(stone < 1e9) { stone++; }
@@ -155,7 +142,7 @@ static void* long_spin(void *p)
 
 // Start 2 independent threads, seen above
 // If saveacore is non-zero, We will pin long_spin and time_spin to the same CPU
-// Pinning threads together will slow down random number generation
+// Pinning spinning threads together will slow down random number generation
 int start_your_engines(uint64_t saveacore)
 {
 	pthread_t thr_id;
