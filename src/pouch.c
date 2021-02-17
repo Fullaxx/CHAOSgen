@@ -1,9 +1,14 @@
+#define _GNU_SOURCE
+#include <sched.h>
+//#include <sys/types.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>		//gettid()
 #include <time.h>
 #include <pthread.h>
-#include <sched.h>
+#include <errno.h>
 
 #include "pouch.h"
 
@@ -64,6 +69,18 @@ static void siphon(void)
 	}
 }
 
+static int pin_thread(int cpuid)
+{
+	int err;
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+	CPU_SET(cpuid, &mask);
+
+	err = sched_setaffinity(gettid(), sizeof(mask), &mask);
+	if(err) { fprintf(stderr, "sched_setaffinity(%d) error: %s\n", gettid(), strerror(errno)); }
+	return err;
+}
+
 /*
 CLOCK_MONOTONIC
   A  nonsettable  system-wide clock that represents monotonic time since--as described by POSIX--"some un-
@@ -85,6 +102,8 @@ static void* time_spin(void *p)
 {
 	struct timespec lts = { 0, 0 };
 
+	if((uint64_t)p > 0) { (void)pin_thread(0); }
+
 	while(!g_shutdown) {
 		clock_gettime(CLOCK_MONOTONIC_RAW, &lts);
 		if(lts.tv_nsec != ts.tv_nsec) {
@@ -99,11 +118,13 @@ static void* time_spin(void *p)
 #endif
 
 	}
-	return (NULL);
+	return NULL;
 }
 
 static void* long_spin(void *p)
 {
+	if((uint64_t)p > 0) { (void)pin_thread(0); }
+
 	// Let the stone spin a bit before we unlock
 	while(stone < 1e9) { stone++; }
 	siphon_locked = 0;
@@ -112,18 +133,20 @@ static void* long_spin(void *p)
 		// This stone will roll forever
 		stone++;
 	}
-	return (NULL);
+	return NULL;
 }
 
 // Start 2 independent threads, seen above
-int start_your_engines(void)
+// If saveacore is non-zero, We will pin long_spin and time_spin to the same CPU
+// Pinning threads together will slow down random number generation
+int start_your_engines(uint64_t saveacore)
 {
 	pthread_t thr_id;
 
-	if( pthread_create(&thr_id, NULL, &long_spin, NULL) ) { return -1; }
+	if( pthread_create(&thr_id, NULL, &long_spin, (void *)saveacore) ) { return -1; }
 	if( pthread_detach(thr_id) ) { return -1; }
 
-	if( pthread_create(&thr_id, NULL, &time_spin, NULL) ) { return -1; }
+	if( pthread_create(&thr_id, NULL, &time_spin, (void *)saveacore) ) { return -1; }
 	if( pthread_detach(thr_id) ) { return -1; }
 
 	return 0;
@@ -167,3 +190,50 @@ void get_chaos(chaos_t *s)
 	new_data_available = 0;
 	pthread_mutex_unlock(&plock);
 }
+
+
+
+////////////////////////////////////////
+#if 0
+This does not seem to buy us anything
+void get_chaos_amt(int amt, chaos_t sarr[])
+{
+	int j = 0;
+	chaos_t *s;
+#ifndef NO_POUCH_RAND_START
+	int n;
+	PCT i, start;
+#endif
+
+	// Only 1 thread in here at a time
+	// Only hand out the same chaos once
+	pthread_mutex_lock(&plock);
+
+	while(j < amt) {
+		while(new_data_available == 0) {
+			// check for shutdown flag while we wait for data to become available
+			if(g_shutdown) { pthread_mutex_unlock(&plock); return; }
+			sched_yield();	// Evidently this is more necessary that originally thought ...
+		}
+
+		s = &sarr[j];
+		s->entropy = malloc(CHAOSSIZE);
+#ifdef NO_POUCH_RAND_START
+		memcpy(s->entropy, &pouch[0], CHAOSSIZE);
+		//s->bytes = CHAOSSIZE;
+#else
+		n = 0;
+		i = start = (stone % PSIZE);
+		do {
+			memcpy(&s->entropy[n], &pouch[i++], sizeof(PBT));
+			n += sizeof(PBT);
+		} while(i != start);
+		//s->bytes = n;	// n SHOULD ALWAYS BE CHAOSSIZE
+#endif
+		new_data_available = 0;
+		j++;
+	}
+
+	pthread_mutex_unlock(&plock);
+}
+#endif

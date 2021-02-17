@@ -125,8 +125,8 @@ int main(int argc, char *argv[])
 	parse_args(argc, argv);
 	my_libgcrypt_init(NEED_LIBGCRYPT_VERSION);
 
-	err = start_your_engines();
-	if(err) { shutdown_message("engine()"); }
+	err = start_your_engines(0);
+	if(err) { shutdown_message("start_your_engines()"); }
 
 #ifndef STATISTICS
 	print_dh_header();

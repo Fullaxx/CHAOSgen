@@ -150,8 +150,8 @@ int main(int argc, char *argv[])
 	}
 	if(err) { shutdown_message("doConnect()"); }
 
-	err = start_your_engines();
-	if(err) { shutdown_message("engine()"); }
+	err = start_your_engines(0);
+	if(err) { shutdown_message("start_your_engines()"); }
 
 	while(g_chaos_threads-- > 0) {
 		if( pthread_create(&thr_id, NULL, &collect_chaos, NULL) ) { shutdown_message("pthread_create()"); }

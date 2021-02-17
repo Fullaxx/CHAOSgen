@@ -27,7 +27,8 @@ typedef struct {
 	char *numbers;
 } chaos_t;
 
-int start_your_engines(void);
+int start_your_engines(uint64_t saveacore);
 void get_chaos(chaos_t *s);
+// void get_chaos_amt(int, chaos_t[]);
 
 #endif
