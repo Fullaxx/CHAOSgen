@@ -1,7 +1,4 @@
 #define _GNU_SOURCE
-#include <sched.h>
-//#include <sys/types.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +6,8 @@
 #include <time.h>
 #include <pthread.h>
 #include <errno.h>
+#include <sched.h>
+//#include <sys/types.h>
 
 #include "pouch.h"
 
@@ -144,9 +143,11 @@ int start_your_engines(uint64_t saveacore)
 	pthread_t thr_id;
 
 	if( pthread_create(&thr_id, NULL, &long_spin, (void *)saveacore) ) { return -1; }
+	(void)pthread_setname_np(thr_id, "long_spin");
 	if( pthread_detach(thr_id) ) { return -1; }
 
 	if( pthread_create(&thr_id, NULL, &time_spin, (void *)saveacore) ) { return -1; }
+	(void)pthread_setname_np(thr_id, "time_spin");
 	if( pthread_detach(thr_id) ) { return -1; }
 
 	return 0;

@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -119,6 +120,7 @@ int main(int argc, char *argv[])
 
 	while(g_chaos_threads-- > 0) {
 		if( pthread_create(&thr_id, NULL, &collect_chaos, NULL) ) { shutdown_message("pthread_create()"); }
+		(void)pthread_setname_np(thr_id, "collect_chaos");
 		if( pthread_detach(thr_id) )  { shutdown_message("pthread_detach()"); }
 	}
 
