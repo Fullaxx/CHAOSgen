@@ -24,7 +24,6 @@
 #include <pthread.h>
 
 #include "pouch.h"
-#include "pin.h"
 
 #ifdef STATISTICS
 uint64_t g_clock_gettime_called = 0;
@@ -104,9 +103,6 @@ static void* time_spin(void *p)
 {
 	struct timespec lts = { 0, 0 };
 
-	// If saveacore was requested, PIN to CPU 0
-	if((uint64_t)p > 0) { (void)pinme(0); }
-
 	while(!g_shutdown) {
 		clock_gettime(CLOCK_MONOTONIC_RAW, &lts);
 		if(lts.tv_nsec != ts.tv_nsec) {
@@ -126,9 +122,6 @@ static void* time_spin(void *p)
 
 static void* long_spin(void *p)
 {
-	// If saveacore was requested, PIN to CPU 0
-	if((uint64_t)p > 0) { (void)pinme(0); }
-
 	// Let the stone spin a bit before we unlock
 	while(stone < 1e9) { stone++; }
 	siphon_locked = 0;
@@ -145,15 +138,35 @@ static void* long_spin(void *p)
 // Pinning spinning threads together will slow down random number generation
 int start_your_engines(uint64_t saveacore)
 {
+	int err;
+	pthread_attr_t attr;
 	pthread_t thr_id;
+	cpu_set_t mask;
 
-	if( pthread_create(&thr_id, NULL, &long_spin, (void *)saveacore) ) { return -1; }
+	CPU_ZERO(&mask);
+	CPU_SET(0, &mask);
+
+	err = pthread_attr_init(&attr);
+	if(err) { perror("pthread_attr_init()"); return -1; }
+
+	err = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	if(err) { perror("pthread_attr_setdetachstate()"); return -2; }
+
+	if(saveacore) {
+		err = pthread_attr_setaffinity_np(&attr, sizeof(mask), &mask);
+		if(err) { perror("pthread_attr_setaffinity_np()"); return -3; }
+	}
+
+	//err = pthread_attr_setstacksize(&attr, 32768);
+	//if(err) { perror("pthread_attr_setstacksize()"); return -4; }
+
+	err = pthread_create(&thr_id, &attr, &long_spin, NULL);
+	if(err) { perror("pthread_create()"); return -5; }
 	(void)pthread_setname_np(thr_id, "long_spin");
-	if( pthread_detach(thr_id) ) { return -1; }
 
-	if( pthread_create(&thr_id, NULL, &time_spin, (void *)saveacore) ) { return -1; }
+	err = pthread_create(&thr_id, &attr, &time_spin, NULL);
+	if(err) { perror("pthread_create()"); return -6; }
 	(void)pthread_setname_np(thr_id, "time_spin");
-	if( pthread_detach(thr_id) ) { return -1; }
 
 	return 0;
 }

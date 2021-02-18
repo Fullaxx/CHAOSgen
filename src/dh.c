@@ -124,6 +124,27 @@ static void* collect_chaos(void *p)
 	return NULL;
 }
 
+static int start_collection(void)
+{
+	int err;
+	pthread_attr_t attr;
+	pthread_t thr_id;
+
+	err = pthread_attr_init(&attr);
+	if(err) { perror("pthread_attr_init()"); return -1; }
+
+	err = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	if(err) { perror("pthread_attr_setdetachstate()"); return -2; }
+
+	while(g_chaos_threads-- > 0) {
+		err = pthread_create(&thr_id, &attr, &collect_chaos, NULL);
+		if(err) { perror("pthread_create()"); return -3; }
+		(void)pthread_setname_np(thr_id, "collect_chaos");
+	}
+
+	return 0;
+}
+
 #ifndef STATISTICS
 static void print_dh_header(void)
 {
@@ -139,7 +160,6 @@ static void print_dh_header(void)
 int main(int argc, char *argv[])
 {
 	int err;
-	pthread_t thr_id;
 
 	parse_args(argc, argv);
 	my_libgcrypt_init(NEED_LIBGCRYPT_VERSION);
@@ -151,11 +171,8 @@ int main(int argc, char *argv[])
 	print_dh_header();
 #endif
 
-	while(g_chaos_threads-- > 0) {
-		if( pthread_create(&thr_id, NULL, &collect_chaos, NULL) ) { shutdown_message("pthread_create()"); }
-		(void)pthread_setname_np(thr_id, "collect_chaos");
-		if( pthread_detach(thr_id) )  { shutdown_message("pthread_detach()"); }
-	}
+	err = start_collection();
+	if(err) { shutdown_message("start_collection()"); }
 
 	signal(SIGINT,	sig_handler);
 	signal(SIGTERM, sig_handler);
@@ -167,7 +184,7 @@ int main(int argc, char *argv[])
 #endif
 
 	while(!g_shutdown) {
-		usleep(25);
+		usleep(100);
 	}
 
 	usleep(10000);	// Let the thread(s) catch and die
@@ -214,5 +231,10 @@ void parse_args(int argc, char **argv)
 
 		//This free() is required since getopts() automagically allocates space for "args" everytime it's called.
 		free(args);
+	}
+
+	if(g_chaos_threads < 1) {
+		fprintf(stderr, "g_chaos_threads must be > 0! (Fix with -n)\n");
+		exit(1);
 	}
 }

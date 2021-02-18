@@ -14,11 +14,11 @@ DBGCFLAGS="${CFLAGS} -ggdb3 -DDEBUG"
 rm -f *.dbg *.exe
 
 gcc ${OPTCFLAGS} chaos2redis.c redisops.c \
-pouch.c pin.c pot?.c getopts.c my_gcry_help.c \
+pouch.c pot?.c getopts.c my_gcry_help.c \
 -lpthread ${GCLIBS} -lhiredis -o chaos2redis.exe
 
 gcc ${DBGCFLAGS} chaos2redis.c redisops.c chronometry.c \
-pouch.c pin.c pot?.c getopts.c my_gcry_help.c \
+pouch.c pot?.c getopts.c my_gcry_help.c \
 -lpthread ${GCLIBS} -lhiredis -o chaos2redis.dbg
 
 strip *.exe

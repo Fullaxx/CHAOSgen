@@ -43,7 +43,7 @@ int g_shutdown = 0;
 char *g_rsock = NULL;
 char *g_rhost = NULL;
 uint16_t g_rport = 0;
-uint16_t g_chaos_threads = 1;
+int g_chaos_threads = 1;
 uint16_t g_chaos_amt = 4;
 
 uint64_t g_chaos_collected = 0;
@@ -154,10 +154,30 @@ static void* collect_chaos(void *p)
 	return NULL;
 }
 
+static int start_collection(void)
+{
+	int err;
+	pthread_attr_t attr;
+	pthread_t thr_id;
+
+	err = pthread_attr_init(&attr);
+	if(err) { perror("pthread_attr_init()"); return -1; }
+
+	err = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	if(err) { perror("pthread_attr_setdetachstate()"); return -2; }
+
+	while(g_chaos_threads-- > 0) {
+		err = pthread_create(&thr_id, &attr, &collect_chaos, NULL);
+		if(err) { perror("pthread_create()"); return -3; }
+		(void)pthread_setname_np(thr_id, "collect_chaos");
+	}
+
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	int err;
-	pthread_t thr_id;
 
 	parse_args(argc, argv);
 	my_libgcrypt_init(NEED_LIBGCRYPT_VERSION);
@@ -172,11 +192,8 @@ int main(int argc, char *argv[])
 	err = start_your_engines(0);
 	if(err) { shutdown_message("start_your_engines()"); }
 
-	while(g_chaos_threads-- > 0) {
-		if( pthread_create(&thr_id, NULL, &collect_chaos, NULL) ) { shutdown_message("pthread_create()"); }
-		(void)pthread_setname_np(thr_id, "collect_chaos");
-		if( pthread_detach(thr_id) )  { shutdown_message("pthread_detach()"); }
-	}
+	err = start_collection();
+	if(err) { shutdown_message("start_collection()"); }
 
 	signal(SIGINT,	sig_handler);
 	signal(SIGTERM, sig_handler);
@@ -255,6 +272,11 @@ void parse_args(int argc, char **argv)
 
 		//This free() is required since getopts() automagically allocates space for "args" everytime it's called.
 		free(args);
+	}
+
+	if(g_chaos_threads < 1) {
+		fprintf(stderr, "g_chaos_threads must be > 0! (Fix with -n)\n");
+		exit(1);
 	}
 
 	if(!g_rsock && !g_rhost) {
