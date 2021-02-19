@@ -1,4 +1,4 @@
-dist: buster
+dist: focal
 sudo: false
 language: c
 #env:
@@ -13,7 +13,7 @@ addons:
     packages:
       - libmicrohttpd-dev
       - libhiredis-dev
-      - libgcrypt20-dev
+      - libgcrypt-dev
       - dieharder
 script:
   - cd src
