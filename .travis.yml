@@ -13,7 +13,7 @@ addons:
     packages:
       - libmicrohttpd-dev
       - libhiredis-dev
-      - libgcrypt-dev
+      - libgcrypt20-dev
       - dieharder
 script:
   - cd src
