@@ -1,14 +1,14 @@
 # ------------------------------------------------------------------------------
 # Install build tools and compile CHAOSgen
-FROM ubuntu:focal AS build
+FROM debian:buster-slim AS build
 ADD src /code
 RUN apt-get update && \
-	apt-get install -y build-essential libgcrypt20-dev && \
+	apt-get install -y build-essential libgcrypt-dev && \
 	cd /code && ./compile.sh
 
 # ------------------------------------------------------------------------------
 # Pull base image
-FROM ubuntu:focal
+FROM debian:buster-slim
 MAINTAINER Brett Kuskie <fullaxx@gmail.com>
 
 # ------------------------------------------------------------------------------

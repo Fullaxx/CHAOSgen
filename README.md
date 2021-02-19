@@ -4,7 +4,7 @@
 CHAOSgen is a random number generator based on hardware events
 
 ## Base Docker Image
-[Ubuntu](https://hub.docker.com/_/ubuntu) 20.04 (x64)
+[Debian](https://hub.docker.com/_/debian) buster-slim (x64)
 
 ## Get the image from Docker Hub or build it yourself
 ```
