@@ -54,6 +54,7 @@ static void alarm_handler(int signum)
 	uint64_t l_num = g_numbers_submitted;
 	g_chaos_collected = g_numbers_submitted = 0;
 	printf("%9lu/%9lu\n", l_chaos, l_num);
+	fflush(stdout);
 	(void) alarm(1);
 }
 
