@@ -43,8 +43,8 @@ void chaos_srv_start(srv_opts_t *);
 void chaos_srv_stop(void);
 
 // Found in chaos_srv_node.c
-char* chaos(char *, int, srci_t *, void *, void *);
-char* config(char *, int, srci_t *, void *, void *);
-char* status(char *, int, srci_t *, void *, void *);
+char* chaos_node(char *, int, srci_t *, void *, void *);
+char* config_node(char *, int, srci_t *, void *, void *);
+char* status_node(char *, int, srci_t *, void *, void *);
 
 #endif

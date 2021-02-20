@@ -23,6 +23,7 @@
 #include "pouch.h"
 
 void push_random_numbers(int, chaos_t[]);
+void post_status(uint64_t, uint64_t);
 int doConnect(char *, unsigned short);
 void doDisconnect(void);
 void set_list_count(uint32_t);

@@ -4,4 +4,4 @@
 * Redis 6.2 LPOP <LIST> [COUNT]
 * Dockerfile and supervisord to manage
 * ENV variables to control chaos2redis and chaos_srv
-* Create output for /status and /config
+* What should /config do?

@@ -170,6 +170,17 @@ void push_random_numbers(int snum, chaos_t sarr[])
 	pthread_mutex_unlock(&rlock);
 }
 
+void post_status(uint64_t chaos, uint64_t num)
+{
+	redisReply *r1, *r2;
+	pthread_mutex_lock(&rlock);
+	r1 = redisCommand(rc, "SET CHAOSPERSEC %lu", chaos);
+	r2 = redisCommand(rc, "SET RNUMPERSEC %lu", num);
+	pthread_mutex_unlock(&rlock);
+	freeReplyObject(r1);
+	freeReplyObject(r2);
+}
+
 static inline void set_listcount(void)
 {
 	redisReply *reply;

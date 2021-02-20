@@ -216,7 +216,7 @@ static inline char* shutdownmsg(srci_t *ri)
 	return strdup("service unavailable: shutting down");
 }
 
-char* chaos(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
+char* chaos_node(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
 {
 	int quantity;
 	char *page, *jsonstr;
@@ -245,7 +245,7 @@ char* chaos(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_u
 	return page;
 }
 
-char* config(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
+char* config_node(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
 {
 	//srv_opts_t *so;
 
@@ -257,14 +257,89 @@ char* config(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_
 	return strdup("OK");
 }
 
-char* status(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
+static inline long get_rnumpersec(redisContext *rc)
 {
-	//srv_opts_t *so;
+	long retval = 0;
+	redisReply *reply;
+	reply = redisCommand(rc, "GET RNUMPERSEC");
+	if(reply->type == REDIS_REPLY_STRING) {
+		if(reply->str) {
+			retval = atol(reply->str);
+		}
+	}
+	freeReplyObject(reply);
+	return retval;
+}
+
+static inline long get_chaospersec(redisContext *rc)
+{
+	long retval = 0;
+	redisReply *reply;
+	reply = redisCommand(rc, "GET CHAOSPERSEC");
+	if(reply->type == REDIS_REPLY_STRING) {
+		if(reply->str) {
+			retval = atol(reply->str);
+		}
+	}
+	freeReplyObject(reply);
+	return retval;
+}
+
+static char* status2json(long chaos, long rnum)
+{
+	cJSON *root_obj;
+	char *page;
+
+	root_obj = cJSON_CreateObject();
+	cJSON_AddNumberToObject(root_obj, "Chaos/s", chaos);
+	cJSON_AddNumberToObject(root_obj, "Numbers/s", rnum);
+	page = cJSON_Print(root_obj);
+	cJSON_Delete(root_obj);
+	cJSON_Minify(page);
+
+	return page;
+}
+
+static char* get_status(srci_t *ri, srv_opts_t *so)
+{
+	char *statstr;
+	redisContext *rc;
+	long chaos, rnum;
+
+	// Connect to redis
+	if(so->rport) { rc = redisConnect(so->rdest, so->rport); }
+	else		{ rc = redisConnectUnix(so->rdest); }
+	if(!rc) { return redisAllocationFailure(ri); }
+	if(rc->err) { return redisConnectionFailure(ri, rc); }
+
+	chaos = get_chaospersec(rc);
+	rnum = get_rnumpersec(rc);
+
+	// Convert to JSON output if requested
+	if(srci_browser_requests_json(ri)) {
+		statstr = status2json(chaos, rnum);
+		srci_set_response_content_type(ri, MIMETYPEAPPJSONSTR);
+	} else {
+		statstr = malloc(128);
+		snprintf(statstr, 128, "Chaos: %lu\nNumbers: %lu\n", chaos, rnum);
+	}
+
+	redisFree(rc);
+	return statstr;
+}
+
+char* status_node(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
+{
+	char *page;
+	srv_opts_t *so;
 
 	if(shutting_down()) { return shutdownmsg(ri); }
 	if(METHOD(ri) != METHOD_GET) { return badmethod(ri); }
-	//so = (srv_opts_t *)sri_user_data;
+	so = (srv_opts_t *)sri_user_data;
+
+	// Get Status values from redis and return a status page
+	page = get_status(ri, so);
 
 	srci_set_return_code(ri, MHD_HTTP_OK);
-	return strdup("OK");
+	return page;
 }

@@ -25,7 +25,6 @@
 
 // The searest instance
 sri_t *g_srv = NULL;
-//wsrt_t g_rt;
 
 #ifdef SRNODECHRONOMETRY
 #include "chronometry.h"
@@ -35,23 +34,14 @@ void print_avg_nodecb_time(void)
 
 	if(!g_srv) { return; }
 
-	avg = searest_node_get_avg_duration(g_srv, "/store/128/");
-	if(avg > 0) printf("%3s: %ldns\n", "128", avg);
+	avg = searest_node_get_avg_duration(g_srv, "/chaos/");
+	if(avg > 0) printf("%3s: %ldns\n", "chaos", avg);
 
-	avg = searest_node_get_avg_duration(g_srv, "/store/160/");
-	if(avg > 0) printf("%3s: %ldns\n", "160", avg);
+	avg = searest_node_get_avg_duration(g_srv, "/config/");
+	if(avg > 0) printf("%3s: %ldns\n", "config", avg);
 
-	avg = searest_node_get_avg_duration(g_srv, "/store/224/");
-	if(avg > 0) printf("%3s: %ldns\n", "224", avg);
-
-	avg = searest_node_get_avg_duration(g_srv, "/store/256/");
-	if(avg > 0) printf("%3s: %ldns\n", "256", avg);
-
-	avg = searest_node_get_avg_duration(g_srv, "/store/384/");
-	if(avg > 0) printf("%3s: %ldns\n", "384", avg);
-
-	avg = searest_node_get_avg_duration(g_srv, "/store/512/");
-	if(avg > 0) printf("%3s: %ldns\n", "512", avg);
+	avg = searest_node_get_avg_duration(g_srv, "/status/");
+	if(avg > 0) printf("%3s: %ldns\n", "status", avg);
 }
 #endif
 
@@ -91,45 +81,14 @@ void chaos_srv_start(srv_opts_t *so)
 {
 	int z;
 
-#if 0
-	// Connect to Redis
-	memset(&g_rt, 0, sizeof(wsrt_t));
-	g_rt.multithreaded = so->use_threads;
-	z = rai_connect(&g_rt.rc, so->rdest, so->rport);
-	if(z) {
-		if(so->rport) { fprintf(stderr, "Failed to connect to %s:%u!\n", so->rdest, so->rport); }
-		else { fprintf(stderr, "Failed to connect to %s!\n", so->rdest); }
-		exit(EXIT_FAILURE);
-	}
-#endif
-
 	// Initialize the server
 	g_srv = searest_new(7, 32, 0);
-	searest_node_add(g_srv, "/config/",	&config, NULL);
-	searest_node_add(g_srv, "/chaos/",	&chaos, NULL);
-	searest_node_add(g_srv, "/status/",	&status, NULL);
+	searest_node_add(g_srv, "/chaos/",	&chaos_node, NULL);
+	searest_node_add(g_srv, "/config/",	&config_node, NULL);
+	searest_node_add(g_srv, "/status/",	&status_node, NULL);
 
 	// Configure Multithread
 	if(so->use_threads == 0) { searest_set_internal_select(g_srv); }
-
-#if 0
-	// Configure Connection Limiting
-	if(getenv("REQPERIOD")) { g_rt.reqperiod = atoi(getenv("REQPERIOD")); }
-	if(getenv("REQCOUNT")) { g_rt.reqcount = atol(getenv("REQCOUNT")); }
-	if((g_rt.reqperiod > 0) && (g_rt.reqcount > 0)) {
-		searest_set_addr_cb(g_srv, &ws_addr_check);
-	}
-
-	// Configure Redis Key Expiration
-	if(getenv("EXPIRATION")) { g_rt.expiration = atol(getenv("EXPIRATION")); }
-	if(g_rt.expiration < 0) { g_rt.expiration = 0; }
-
-	// Configure immutable messages
-	if(getenv("IMMUTABLE")) { g_rt.immutable = 1; }
-
-	// Configure [B]urn [A]fter [R]eading (DELETE after GET)
-	if(getenv("BAR")) { g_rt.bar = 1; }
-#endif
 
 	// Configure HTTPS
 	if(so->certfile && so->keyfile) { activate_https(so); }
@@ -148,6 +107,5 @@ void chaos_srv_stop(void)
 	if(g_srv) {
 		searest_stop(g_srv);
 		searest_del(g_srv);
-		//rai_disconnect(&g_rt.rc);
 	}
 }
