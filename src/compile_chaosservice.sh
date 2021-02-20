@@ -21,4 +21,12 @@ gcc ${DBGCFLAGS} chaos2redis.c redisops.c chronometry.c \
 pouch.c pot?.c getopts.c my_gcry_help.c \
 -lpthread ${GCLIBS} -lhiredis -o chaos2redis.dbg
 
+gcc ${OPTCFLAGS} chaos_srv_*.c \
+getopts.c futils.c searest*.c \
+-lpthread -lmicrohttpd -lhiredis -o chaos_srv.exe
+
+gcc ${DBGCFLAGS} chaos_srv_*.c chronometry.c \
+getopts.c futils.c searest*.c \
+-lpthread -lmicrohttpd -lhiredis -o chaos_srv.dbg
+
 strip *.exe

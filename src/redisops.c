@@ -170,6 +170,13 @@ void push_random_numbers(int snum, chaos_t sarr[])
 	pthread_mutex_unlock(&rlock);
 }
 
+static inline void set_listcount(void)
+{
+	redisReply *reply;
+	reply = redisCommand(rc, "SET LISTCOUNT %u", g_maxlists);
+	freeReplyObject(reply);
+}
+
 // return -1 means you have an open redis handle already (or it appears that way), bail
 // return -2 means redisConnect() failed, bail
 // return -3 means there was an connetion error during redisConnect()
@@ -192,6 +199,7 @@ int doConnect(char *dest, unsigned short port)
 		return -3;
 	}
 
+	set_listcount();
 	return 0;
 }
 

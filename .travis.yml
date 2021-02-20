@@ -1,11 +1,6 @@
 dist: focal
 sudo: false
 language: c
-#env:
-#  matrix:
-#    - VALGRIND=On SANITIZERS=Off
-#    - VALGRIND=Off SANITIZERS=Off
-#    - VALGRIND=Off SANITIZERS=On
 compiler:
   - gcc
 addons:
@@ -18,4 +13,4 @@ addons:
 script:
   - cd src
   - ./compile.sh
-  - ./compile_chaosstorage.sh
+  - ./compile_chaosservice.sh
