@@ -46,6 +46,7 @@ uint16_t g_rport = 0;
 int g_chaos_threads = 1;
 uint16_t g_chaos_amt = 4;
 
+int g_print_stats = 0;
 uint64_t g_chaos_collected = 0;
 uint64_t g_numbers_submitted = 0;
 static void alarm_handler(int signum)
@@ -54,8 +55,10 @@ static void alarm_handler(int signum)
 	uint64_t l_num = g_numbers_submitted;
 	g_chaos_collected = g_numbers_submitted = 0;
 	post_status(l_chaos, l_num);
-	printf("%9lu/%9lu\n", l_chaos, l_num);
-	fflush(stdout);
+	if(g_print_stats) {
+		printf("%9lu/%9lu\n", l_chaos, l_num);
+		fflush(stdout);
+	}
 	(void) alarm(1);
 }
 
@@ -227,6 +230,7 @@ struct options opts[] =
 	{ 5, "lsize",	"the size of each redis list",				NULL,	1 },
 	{ 6, "cores",	"the number of hashing cores to use",		"n",	1 },
 	{ 7, "chaos",	"the amount of chaos per thread to aquire",	NULL,	1 },
+	{ 8, "stats",	"Print stats to stdout every second",		NULL,	0 },
 	{ 0, NULL,		NULL,										NULL,	0 }
 };
 
@@ -266,6 +270,9 @@ void parse_args(int argc, char **argv)
 				break;
 			case 7:
 				g_chaos_amt = atoi(args);
+				break;
+			case 8:
+				g_print_stats = 1;
 				break;
 			default:
 				fprintf(stderr, "Unexpected getopts Error! (%d)\n", c);
