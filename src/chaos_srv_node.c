@@ -19,21 +19,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <unistd.h>
-//#include <ctype.h>
 
+#include "cJSON.h"
 #include "chaos_srv_ops.h"
 #include "hiredis/hiredis.h"
 
 unsigned int g_listcount = 10;
 
-//#include <errno.h>
 static char* handle_null_reply(srci_t *ri, redisContext *rc)
 {
 	char *etype = NULL;
 	switch(rc->err) {
 		case REDIS_ERR_IO:
-			//fprintf(stderr, "REDIS_ERR_IO: %s\n", strerror(errno));
 			perror("REDIS_ERR_IO");
 			break;
 		case REDIS_ERR_EOF:
@@ -54,9 +51,8 @@ static char* handle_null_reply(srci_t *ri, redisContext *rc)
 	if(etype) {
 		fprintf(stderr, "%s: %s\n", etype, rc->errstr);
 	}
-	//g_shutdown = 1;
 	srci_set_return_code(ri, MHD_HTTP_INTERNAL_SERVER_ERROR);
-	return strdup("NULL REPLY\n");
+	return strdup("ERROR: NULL REPLY\n");
 }
 
 static char* get_numbers(srci_t *ri, srv_opts_t *so, redisContext *rc, int quantity)
@@ -64,29 +60,31 @@ static char* get_numbers(srci_t *ri, srv_opts_t *so, redisContext *rc, int quant
 	int rcode;
 	unsigned int list;
 	size_t n, size;
-	//size_t cmd_count;
 	size_t list_miss;
 	char *page, *errstr;
 	redisReply *reply;
 
+	// Set default values
 	n = size = 0;
-	//cmd_count = 0;
 	list_miss = 0;
 	page = errstr = NULL;
 	rcode = MHD_HTTP_OK;
 
+	// If we need to bail out for any reason,
+	// We will just set quantity = 0
 	while(quantity > 0) {
-		list = so->last_list++;
-		reply = redisCommand(rc, "LPOP RANDLIST:%u", list % g_listcount);
+		list = so->last_list++ % g_listcount;
+		reply = redisCommand(rc, "LPOP RANDLIST:%u", list);
 		if(!reply) {
+			// This should not happen
 			if(page) { free(page); }
 			return handle_null_reply(ri, rc);
 		}
 
-		// Process the request
+		// Process the numbers that we pulled from the list
 		if(reply->type == REDIS_REPLY_ERROR) {
 			rcode = MHD_HTTP_BAD_REQUEST;
-			errstr = "REDIS REPLY ERROR\n";
+			errstr = "ERROR: REDIS REPLY ERROR\n";
 			quantity = 0;
 		} else if(reply->type == REDIS_REPLY_NIL) {
 			// LIST IS EMPTY
@@ -103,10 +101,9 @@ static char* get_numbers(srci_t *ri, srv_opts_t *so, redisContext *rc, int quant
 			//list_miss = 0;
 		}*/ else {
 			rcode = MHD_HTTP_INTERNAL_SERVER_ERROR;
-			errstr = "UNKNOWN ERROR\n";
+			errstr = "ERROR: UNKNOWN\n";
 			quantity = 0;
 		}
-		//cmd_count++;
 		freeReplyObject(reply);
 		if(list_miss > g_listcount) { quantity = 0; }
 	}
@@ -114,14 +111,16 @@ static char* get_numbers(srci_t *ri, srv_opts_t *so, redisContext *rc, int quant
 	if(rcode != MHD_HTTP_OK) {
 		// If we came across an error
 		// free any page that we started
+		// return an error string
 		if(page) { free(page); }
 		page = strdup(errstr);
 	}
 
 	if(!page) {
-		// If we got here then we had no errors AND never found any numbers
+		// If we made it here then
+		// We had no errors AND never found any numbers
 		rcode = MHD_HTTP_NOT_FOUND;
-		page = strdup("SUPPLY EMPTY\n");
+		page = strdup("ERROR: SUPPLY EMPTY\n");
 	}
 
 	srci_set_return_code(ri, rcode);
@@ -175,6 +174,36 @@ static char* get_chaos(srci_t *ri, srv_opts_t *so, int quantity)
 	return page;
 }
 
+static char* convert2json(char *numstr)
+{
+	char *token, *saveptr;
+	double rval;
+	//uint32_t rval;
+	cJSON *root_obj;
+	char *page;
+
+	// Process errors before we allocate any memory
+	if(strncmp(numstr, "ERROR: SUPPLY EMPTY", 19) == 0) { return strdup("[]"); }
+	if(strncmp(numstr, "ERROR:", 6) == 0) { return NULL; }
+
+	root_obj = cJSON_CreateArray();
+	token = strtok_r(numstr, " ", &saveptr);
+	while(token) {
+		rval = strtod(token, NULL);
+		//rval = strtoul(token, NULL, 10);
+		//printf("%s: %u\n", token, rval);
+		//cJSON_AddItemToArray(root_obj, cJSON_CreateString(token));
+		cJSON_AddItemToArray(root_obj, cJSON_CreateNumber(rval));
+		token = strtok_r(NULL, " ", &saveptr);
+	}
+
+	page = cJSON_Print(root_obj);
+	cJSON_Delete(root_obj);
+	cJSON_Minify(page);
+
+	return page;
+}
+
 static inline char* badmethod(srci_t *ri)
 {
 	srci_set_return_code(ri, MHD_HTTP_METHOD_NOT_ALLOWED);
@@ -190,7 +219,7 @@ static inline char* shutdownmsg(srci_t *ri)
 char* chaos(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
 {
 	int quantity;
-	char *collection;
+	char *page, *jsonstr;
 	srv_opts_t *so;
 
 	if(shutting_down()) { return shutdownmsg(ri); }
@@ -201,11 +230,19 @@ char* chaos(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_u
 	if(quantity < 1) { quantity = 1; }
 	if(quantity > so->maxqty) { quantity = so->maxqty; }
 
-	collection = get_chaos(ri, so, quantity);
+	// Go get a collection of numbers from redis
+	page = get_chaos(ri, so, quantity);
 
-	// CHECK FOR JSON OUTPUT
+	// Convert to JSON output if requested
+	if(srci_browser_requests_json(ri)) {
+		jsonstr = convert2json(page);
+		if(jsonstr) {
+			free(page); page = jsonstr;
+			srci_set_response_content_type(ri, MIMETYPEAPPJSONSTR);
+		}
+	}
 
-	return collection;
+	return page;
 }
 
 char* config(char *url, int urllen, srci_t *ri, void *sri_user_data, void *node_user_data)
