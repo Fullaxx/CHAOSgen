@@ -35,7 +35,8 @@
 
 #define CHAOSAMTMAX (1024)
 
-void parse_args(int argc, char **argv);
+static void parse_env(void);
+static void parse_args(int argc, char **argv);
 char* transmute_1(uint8_t *buf);
 char* transmute_2(uint8_t *buf);
 
@@ -184,6 +185,7 @@ int main(int argc, char *argv[])
 {
 	int err;
 
+	parse_env();
 	parse_args(argc, argv);
 	my_libgcrypt_init(NEED_LIBGCRYPT_VERSION);
 
@@ -221,6 +223,25 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+// We will parse ENV first
+// parse_args will override
+static void parse_env(void)
+{
+	char *key;
+
+	key = "LISTS";
+	if(getenv(key)) { set_list_count(atoi(getenv(key))); }
+
+	key = "LSIZE";
+	if(getenv(key)) { set_list_size(atoi(getenv(key))); }
+
+	key = "CORES";
+	if(getenv(key)) { g_chaos_threads = atoi(getenv(key)); }
+
+	key = "CHAOS";
+	if(getenv(key)) { g_chaos_amt = atoi(getenv(key)); }
+}
+
 struct options opts[] = 
 {
 	{ 1, "rsock",	"the Redis Socket to connect to",			"S",	1 },
@@ -234,7 +255,7 @@ struct options opts[] =
 	{ 0, NULL,		NULL,										NULL,	0 }
 };
 
-void parse_args(int argc, char **argv)
+static void parse_args(int argc, char **argv)
 {
 	int c;
 	char *args;
