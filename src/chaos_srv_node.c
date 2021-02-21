@@ -257,31 +257,18 @@ char* config_node(char *url, int urllen, srci_t *ri, void *sri_user_data, void *
 	return strdup("OK");
 }
 
-static inline long get_rnumpersec(redisContext *rc)
+static inline long get_status_val(redisContext *rc, char *key)
 {
 	long retval = 0;
 	redisReply *reply;
-	reply = redisCommand(rc, "GET RNUMPERSEC");
+	reply = redisCommand(rc, "GET %s", key);
 	if(reply->type == REDIS_REPLY_STRING) {
 		if(reply->str) {
 			retval = atol(reply->str);
 		}
 	}
 	freeReplyObject(reply);
-	return retval;
-}
-
-static inline long get_chaospersec(redisContext *rc)
-{
-	long retval = 0;
-	redisReply *reply;
-	reply = redisCommand(rc, "GET CHAOSPERSEC");
-	if(reply->type == REDIS_REPLY_STRING) {
-		if(reply->str) {
-			retval = atol(reply->str);
-		}
-	}
-	freeReplyObject(reply);
+	if(retval < 0) { retval = 0; }
 	return retval;
 }
 
@@ -312,8 +299,8 @@ static char* get_status(srci_t *ri, srv_opts_t *so)
 	if(!rc) { return redisAllocationFailure(ri); }
 	if(rc->err) { return redisConnectionFailure(ri, rc); }
 
-	chaos = get_chaospersec(rc);
-	rnum = get_rnumpersec(rc);
+	chaos = get_status_val(rc, "CHAOSPERSEC");
+	rnum = get_status_val(rc, "RNUMPERSEC");
 
 	// Convert to JSON output if requested
 	if(srci_browser_requests_json(ri)) {
