@@ -46,6 +46,7 @@ char *g_rhost = NULL;
 uint16_t g_rport = 0;
 int g_chaos_threads = 1;
 uint16_t g_chaos_amt = 4;
+uint64_t g_saveacore = 0;
 
 int g_print_stats = 0;
 uint64_t g_chaos_collected = 0;
@@ -196,7 +197,7 @@ int main(int argc, char *argv[])
 	}
 	if(err) { shutdown_message("doConnect()"); }
 
-	err = start_your_engines(0);
+	err = start_your_engines(g_saveacore);
 	if(err) { shutdown_message("start_your_engines()"); }
 
 	err = start_collection();
@@ -240,6 +241,9 @@ static void parse_env(void)
 
 	key = "CHAOS";
 	if(getenv(key)) { g_chaos_amt = atoi(getenv(key)); }
+
+	key = "SAVEACORE";
+	if(getenv(key)) { g_saveacore = 1; }
 }
 
 struct options opts[] = 
