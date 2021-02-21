@@ -174,8 +174,8 @@ void post_status(uint64_t chaos, uint64_t num)
 {
 	redisReply *r1, *r2;
 	pthread_mutex_lock(&rlock);
-	r1 = redisCommand(rc, "SET CHAOSPERSEC %lu", chaos);
-	r2 = redisCommand(rc, "SET RNUMPERSEC %lu", num);
+	r1 = redisCommand(rc, "SET CHAOSPERSEC %lu EX 2", chaos);
+	r2 = redisCommand(rc, "SET RNUMPERSEC %lu EX 2", num);
 	pthread_mutex_unlock(&rlock);
 	freeReplyObject(r1);
 	freeReplyObject(r2);
