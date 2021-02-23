@@ -44,10 +44,11 @@ Once collected, chaos is fed through libgcrypt hashing functions using <code>tra
 See [code_walkthrough.txt](https://github.com/Fullaxx/CHAOSgen/blob/master/code_walkthrough.txt) for more detailed information.
 
 ## Running the Binaries
-There are 3 distinct binaries:
+There are 4 distinct binaries:
 * keygen - used to create key files for symmetric encryption
 * dh - used to generate random numbers that dieharder can ingest
 * stats - used to determine how quickly entropy can be generated and show how fast random numbers can be produced
+* chaos2redis - used to populate a redis store with random numbers - see [chaos-dispensary](https://github.com/Fullaxx/chaos-dispensary) for usage
 
 ## Using keygen
 Use 2 hashing cores to generate a 1KB random file named 1KB.bin:
@@ -112,3 +113,6 @@ diehard_count_1s_byt|   0|    256000|     100|0.19582831|  PASSED
  marsaglia_tsang_gcd|   0|  10000000|     100|0.32582469|  PASSED
  marsaglia_tsang_gcd|   0|  10000000|     100|0.89273226|  PASSED
 ```
+
+## More Info
+* [chaos-dispensary](https://github.com/Fullaxx/chaos-dispensary) is a web service that dispenses random numbers
