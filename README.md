@@ -47,7 +47,7 @@ See [code_walkthrough.txt](https://github.com/Fullaxx/CHAOSgen/blob/master/code_
 There are 4 distinct binaries:
 * keygen - used to create key files for symmetric encryption
 * dh - used to generate random numbers that dieharder can ingest
-* stats - used to determine how quickly entropy can be generated and show how fast random numbers can be produced
+* stats - used to show rates of entropy generation and random number production
 * chaos2redis - used to populate a redis store with random numbers (see [chaos-dispensary](https://github.com/Fullaxx/chaos-dispensary) for usage)
 
 ## Using keygen
