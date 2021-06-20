@@ -25,7 +25,7 @@ If your OS is not listed, please help us fill out the table, or submit a request
 | Ubuntu | `apt update; apt install -y build-essential libgcrypt-dev` |
 
 ## Compile the Code
-Install the libgcrypt development package and the compile the code
+Install the libgcrypt development package and compile the code
 ```
 cd src
 ./compile.sh
