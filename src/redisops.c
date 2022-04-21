@@ -75,7 +75,7 @@ static inline void do_redis_lpush(char *cmd, char *list)
 	freeReplyObject(redisCommand(rc, "MULTI"));
 	freeReplyObject(redisCommand(rc, cmd));
 	freeReplyObject(redisCommand(rc, "LTRIM %s 0 %u", list, g_listsize-1));
-	reply = (redisCommand(rc, "EXEC"));
+	reply = redisCommand(rc, "EXEC");
 	if(!reply) { handle_redis_error(); return; }
 	freeReplyObject(reply);
 }

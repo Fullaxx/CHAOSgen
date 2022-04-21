@@ -97,7 +97,7 @@ static char* get_numbers(srci_t *ri, srv_opts_t *so, redisContext *rc, int quant
 			else		{ n += snprintf(page+n, size-n, " %s", reply->str); }
 			quantity--;
 		} /*else if(reply->type == REDIS_REPLY_ARRAY) {
-			// COME BACK TO THIS WHEN WE DO LPOP <LIST> [COUNT] on REDIS 6.2
+			// COME BACK TO THIS WHEN WE CAN DO LPOP <LIST> [COUNT] on REDIS 6.2
 			//list_miss = 0;
 		}*/ else {
 			rcode = MHD_HTTP_INTERNAL_SERVER_ERROR;
