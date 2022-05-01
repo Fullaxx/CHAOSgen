@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/Fullaxx/CHAOSgen.svg?branch=master)](https://travis-ci.com/Fullaxx/CHAOSgen)
-
 # CHAOSgen
 CHAOSgen is a random number generator based on hardware events
 
