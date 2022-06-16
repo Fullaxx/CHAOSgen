@@ -1,4 +1,4 @@
-# CHAOSgen
+# CHAOSgen [![Actions Status](https://github.com/Fullaxx/CHAOSgen/workflows/CI/badge.svg)](https://github.com/Fullaxx/CHAOSgen/actions)
 CHAOSgen is a random number generator based on hardware events
 
 ## Base Docker Image
