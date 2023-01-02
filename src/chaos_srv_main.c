@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 		g_so.rport = g_rport;
 		chaos_srv_start(&g_so);
 	} else {
-		fprintf(stderr, "webstore_start() failed!\n");
+		fprintf(stderr, "chaos_srv_start() failed!\n");
 		exit(EXIT_FAILURE);
 	}
 
