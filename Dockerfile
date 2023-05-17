@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 # Install build tools and compile CHAOSgen
-FROM debian:buster-slim AS build
+FROM debian:bullseye-slim AS build
 ADD src /code
 RUN apt-get update && \
 	apt-get install -y build-essential libgcrypt-dev && \
@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 # ------------------------------------------------------------------------------
 # Pull base image
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 MAINTAINER Brett Kuskie <fullaxx@gmail.com>
 
 # ------------------------------------------------------------------------------
